@@ -9,7 +9,7 @@ export default function Settings() {
   const { settings, updateSettings } = useAlertSettings();
   const { permission, requestPermission } = useNotification();
   const { presets, addPreset, removePreset, resetPresets } = useTimerPresets();
-  const { profile, loading: profileLoading, saveNickname } = useUserProfile();
+  const { profile, saveNickname } = useUserProfile();
   const [newMinutes, setNewMinutes] = useState('');
   const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameInput, setNicknameInput] = useState(profile?.nickname ?? '');
