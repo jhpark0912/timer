@@ -28,7 +28,7 @@ class TaskService(
         val task = Task(
             name = request.name,
             description = request.description,
-            category = request.category
+            colorCode = request.colorCode
         )
         return TaskResponse.from(taskRepository.save(task))
     }
@@ -45,8 +45,9 @@ class TaskService(
             task.name = newName
         }
         request.description?.let { task.description = it }
-        request.category?.let { task.category = it }
+        request.colorCode?.let { task.colorCode = it }
         request.isActive?.let { task.isActive = it }
+        request.isFavorite?.let { task.isFavorite = it }
 
         return TaskResponse.from(task)
     }

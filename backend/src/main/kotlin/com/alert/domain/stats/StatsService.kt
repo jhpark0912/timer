@@ -1,7 +1,6 @@
 package com.alert.domain.stats
 
-import com.alert.domain.timer.TimerSession
-import com.alert.domain.timer.TimerSessionRepository
+import com.alert.domain.activity.ActivityLogRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.DayOfWeek
@@ -11,12 +10,12 @@ import java.time.temporal.TemporalAdjusters
 /**
  * 통계 서비스
  *
- * 완료된 타이머 세션을 기반으로 항목별·기간별 시간 통계를 집계한다.
+ * ActivityLog를 기반으로 항목별·기간별 시간 통계를 집계한다.
  */
 @Service
 @Transactional(readOnly = true)
 class StatsService(
-    private val sessionRepository: TimerSessionRepository
+    private val activityLogRepository: ActivityLogRepository
 ) {
 
     /** 일별 통계 조회 */
@@ -44,30 +43,53 @@ class StatsService(
         return buildStats(from, to)
     }
 
+    /** 기록 출처별(TIMER/MANUAL) 통계 조회 */
+    fun getBySource(from: LocalDate, to: LocalDate): SourceStatsResponse {
+        require(!from.isAfter(to)) { "시작일은 종료일보다 이후일 수 없습니다" }
+        val fromDateTime = from.atStartOfDay()
+        val toDateTime = to.plusDays(1).atStartOfDay()
+        val logs = activityLogRepository.findByEndedAtBetween(fromDateTime, toDateTime)
+        val grandTotal = logs.sumOf { it.durationSeconds }
+
+        val sources = logs
+            .groupBy { it.source.name }
+            .map { (source, group) ->
+                val total = group.sumOf { it.durationSeconds }
+                SourceStatsItem(
+                    source = source,
+                    totalSeconds = total,
+                    logCount = group.size.toLong(),
+                    percentage = if (grandTotal > 0) (total.toDouble() / grandTotal * 100) else 0.0
+                )
+            }
+            .sortedByDescending { it.totalSeconds }
+
+        return SourceStatsResponse(from, to, grandTotal, sources)
+    }
+
     /**
      * 통계 집계 핵심 로직
      *
-     * 완료된 세션의 endedAt 기준으로 기간 필터링하고,
+     * ActivityLog의 endedAt 기준으로 기간 필터링하고,
      * 항목별 소요시간 합계·비율·일별 추이를 계산한다.
      */
     private fun buildStats(from: LocalDate, to: LocalDate): StatsResponse {
         val fromDateTime = from.atStartOfDay()
         val toDateTime = to.plusDays(1).atStartOfDay() // to 날짜 포함 위해 +1일
 
-        val sessions = sessionRepository.findCompletedSessionsBetween(fromDateTime, toDateTime)
+        val logs = activityLogRepository.findByEndedAtBetween(fromDateTime, toDateTime)
 
-        val grandTotal = sessions.sumOf { it.elapsed }
+        val grandTotal = logs.sumOf { it.durationSeconds }
 
         // 항목별 집계
-        val taskStats = sessions
+        val taskStats = logs
             .groupBy { it.task.id }
             .map { (_, group) ->
                 val first = group.first()
-                val total = group.sumOf { it.elapsed }
+                val total = group.sumOf { it.durationSeconds }
                 TaskStatsItem(
                     taskId = first.task.id,
                     taskName = first.task.name,
-                    category = first.task.category,
                     totalSeconds = total,
                     sessionCount = group.size.toLong(),
                     percentage = if (grandTotal > 0) (total.toDouble() / grandTotal * 100) else 0.0
@@ -76,8 +98,8 @@ class StatsService(
             .sortedByDescending { it.totalSeconds }
 
         // 일별 추이
-        val dailyTrend = sessions
-            .groupBy { Pair(it.endedAt!!.toLocalDate(), it.task.id) }
+        val dailyTrend = logs
+            .groupBy { Pair(it.endedAt.toLocalDate(), it.task.id) }
             .map { (key, group) ->
                 val (date, _) = key
                 val first = group.first()
@@ -85,7 +107,7 @@ class StatsService(
                     date = date,
                     taskId = first.task.id,
                     taskName = first.task.name,
-                    totalSeconds = group.sumOf { it.elapsed }
+                    totalSeconds = group.sumOf { it.durationSeconds }
                 )
             }
             .sortedWith(compareBy({ it.date }, { it.taskName }))

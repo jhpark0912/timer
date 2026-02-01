@@ -3,6 +3,8 @@ import { NavLink, Outlet } from 'react-router-dom';
 const NAV_ITEMS = [
   { to: '/', label: '대시보드' },
   { to: '/tasks', label: '항목 관리' },
+  { to: '/activity', label: '수동 기록' },
+  { to: '/timetree', label: '타임 트리' },
   { to: '/stats', label: '통계' },
   { to: '/settings', label: '설정' },
 ];

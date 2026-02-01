@@ -28,9 +28,12 @@ export function useTimer(options: UseTimerOptions) {
   const [session, setSession] = useState<TimerSession | null>(null);
   const [displayRemaining, setDisplayRemaining] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  /** 완료된 태스크명 (팝업 모달 표시용, null이면 숨김) */
+  const [completedTaskName, setCompletedTaskName] = useState<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const sessionRef = useRef<TimerSession | null>(null);
   const alertSettingsRef = useRef(alertSettings);
+  const titleFlashRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // alertSettings를 ref로 유지 (Worker 콜백에서 최신 값 참조)
   useEffect(() => {
@@ -53,6 +56,30 @@ export function useTimer(options: UseTimerOptions) {
     }
   }, []);
 
+  // 탭 타이틀 깜빡임 (다른 탭에서 완료 인지용)
+  const startTitleFlash = useCallback((taskName: string) => {
+    stopTitleFlash();
+    let toggle = false;
+    titleFlashRef.current = setInterval(() => {
+      document.title = toggle ? `⏰ 타이머 완료!` : `✅ ${taskName}`;
+      toggle = !toggle;
+    }, 1000);
+  }, []);
+
+  const stopTitleFlash = useCallback(() => {
+    if (titleFlashRef.current) {
+      clearInterval(titleFlashRef.current);
+      titleFlashRef.current = null;
+    }
+    document.title = '타이머 일정관리';
+  }, []);
+
+  /** 완료 모달 닫기 (탭 타이틀도 원복) */
+  const dismissCompleted = useCallback(() => {
+    setCompletedTaskName(null);
+    stopTitleFlash();
+  }, [stopTitleFlash]);
+
   /** 타이머 완료 시 알림 처리 */
   const handleTimerCompleted = useCallback(async (taskName: string) => {
     const settings = alertSettingsRef.current;
@@ -73,6 +100,10 @@ export function useTimer(options: UseTimerOptions) {
       showToast(`"${taskName}" 타이머가 완료되었습니다.`);
     }
 
+    // 완료 모달 표시 + 탭 타이틀 깜빡임
+    setCompletedTaskName(taskName);
+    startTitleFlash(taskName);
+
     // 서버에 완료 처리
     if (currentSession) {
       try {
@@ -84,7 +115,7 @@ export function useTimer(options: UseTimerOptions) {
     }
 
     updateTitle(0);
-  }, [notificationPermission, showNotification, showToast, updateTitle]);
+  }, [notificationPermission, showNotification, showToast, updateTitle, startTitleFlash]);
 
   // Web Worker 초기화 및 메시지 핸들링
   useEffect(() => {
@@ -224,5 +255,5 @@ export function useTimer(options: UseTimerOptions) {
     }
   };
 
-  return { session, displayRemaining, error, start, pause, resume, stop, fetchActive };
+  return { session, displayRemaining, error, start, pause, resume, stop, fetchActive, completedTaskName, dismissCompleted };
 }

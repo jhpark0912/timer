@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { useAlertSettings } from '../hooks/useAlertSettings';
 import { useNotification } from '../hooks/useNotification';
 import { useTimerPresets } from '../hooks/useTimerPresets';
+import { useUserProfile } from '../hooks/useUserProfile';
 import { playAlertSound } from '../utils/sound';
 
 export default function Settings() {
   const { settings, updateSettings } = useAlertSettings();
   const { permission, requestPermission } = useNotification();
   const { presets, addPreset, removePreset, resetPresets } = useTimerPresets();
+  const { profile, loading: profileLoading, saveNickname } = useUserProfile();
   const [newMinutes, setNewMinutes] = useState('');
+  const [editingNickname, setEditingNickname] = useState(false);
+  const [nicknameInput, setNicknameInput] = useState(profile?.nickname ?? '');
 
   const handleAddPreset = () => {
     const m = parseInt(newMinutes, 10);
@@ -21,6 +25,65 @@ export default function Settings() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-slate-800">설정</h1>
+
+      {/* 닉네임 설정 */}
+      <section className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
+        <h2 className="text-sm font-semibold text-slate-700">프로필</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-600">이름 / 닉네임</p>
+            {!editingNickname && (
+              <p className="text-sm font-medium text-slate-800">{profile?.nickname ?? '미설정'}</p>
+            )}
+          </div>
+          {!editingNickname ? (
+            <button
+              onClick={() => {
+                setNicknameInput(profile?.nickname ?? '');
+                setEditingNickname(true);
+              }}
+              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+            >
+              변경
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={nicknameInput}
+                onChange={e => setNicknameInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && nicknameInput.trim()) {
+                    saveNickname(nicknameInput);
+                    setEditingNickname(false);
+                  }
+                  if (e.key === 'Escape') setEditingNickname(false);
+                }}
+                className="border border-slate-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+              <button
+                onClick={() => {
+                  if (nicknameInput.trim()) {
+                    saveNickname(nicknameInput);
+                    setEditingNickname(false);
+                  }
+                }}
+                disabled={!nicknameInput.trim()}
+                className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                저장
+              </button>
+              <button
+                onClick={() => setEditingNickname(false)}
+                className="text-slate-400 hover:text-slate-600 text-sm"
+              >
+                취소
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* 알림 설정 */}
       <section className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">

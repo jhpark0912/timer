@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { TaskCreateRequest } from '../types';
+import ColorPicker, { COLOR_PRESETS } from './ColorPicker';
 
 interface Props {
   onSubmit: (data: TaskCreateRequest) => Promise<void>;
@@ -8,7 +9,7 @@ interface Props {
 export default function TaskForm({ onSubmit }: Props) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
+  const [colorCode, setColorCode] = useState(COLOR_PRESETS[10]); // 기본 파란색 (#3B82F6)
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,11 +23,11 @@ export default function TaskForm({ onSubmit }: Props) {
       await onSubmit({
         name: name.trim(),
         description: description.trim() || undefined,
-        category: category.trim() || undefined,
+        colorCode,
       });
       setName('');
       setDescription('');
-      setCategory('');
+      setColorCode(COLOR_PRESETS[10]);
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { message?: string } } };
@@ -58,13 +59,10 @@ export default function TaskForm({ onSubmit }: Props) {
         onChange={e => setDescription(e.target.value)}
         className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
-      <input
-        type="text"
-        placeholder="카테고리 (선택)"
-        value={category}
-        onChange={e => setCategory(e.target.value)}
-        className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+      <div>
+        <label className="text-xs text-slate-500 mb-1 block">색상</label>
+        <ColorPicker value={colorCode} onChange={setColorCode} />
+      </div>
       <button
         type="submit"
         disabled={submitting || !name.trim()}

@@ -10,12 +10,7 @@ import java.time.LocalDate
 /**
  * 통계 API 컨트롤러
  *
- * 타이머 세션 기록을 기반으로 기간별 항목별 시간 통계를 제공한다.
- *
- * - GET /api/stats?period=daily&date=2026-02-01
- * - GET /api/stats?period=weekly&date=2026-02-01
- * - GET /api/stats?period=monthly&date=2026-02-01
- * - GET /api/stats?from=2026-01-01&to=2026-01-31
+ * 활동 기록을 기반으로 기간별 항목별 시간 통계를 제공한다.
  */
 @RestController
 @RequestMapping("/api/stats")
@@ -49,5 +44,14 @@ class StatsController(
             "monthly" -> statsService.getMonthly(targetDate)
             else -> statsService.getWeekly(targetDate) // 기본값: 주별
         }
+    }
+
+    /** 기록 출처별(TIMER/MANUAL) 통계 조회 */
+    @GetMapping("/by-source")
+    fun getStatsBySource(
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) from: LocalDate,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) to: LocalDate
+    ): SourceStatsResponse {
+        return statsService.getBySource(from, to)
     }
 }

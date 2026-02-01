@@ -3,6 +3,8 @@ services:
     build: ./frontend
     ports:
       - "80:80"
+    environment:
+      TZ: Asia/Seoul
     depends_on:
       - backend
 
@@ -11,6 +13,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      TZ: Asia/Seoul
       DB_HOST: database
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-alert}
@@ -26,6 +29,7 @@ services:
     ports:
       - "5432:5432"
     environment:
+      TZ: Asia/Seoul
       POSTGRES_DB: ${DB_NAME:-alert}
       POSTGRES_USER: ${DB_USER:-alert}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-alert}

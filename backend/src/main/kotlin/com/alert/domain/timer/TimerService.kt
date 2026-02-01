@@ -1,5 +1,6 @@
 package com.alert.domain.timer
 
+import com.alert.domain.activity.ActivityLogService
 import com.alert.domain.task.TaskRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -10,7 +11,8 @@ import java.time.LocalDateTime
 @Transactional(readOnly = true)
 class TimerService(
     private val timerSessionRepository: TimerSessionRepository,
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val activityLogService: ActivityLogService
 ) {
 
     /** 현재 활성(RUNNING 또는 PAUSED) 타이머 세션 조회 */
@@ -76,13 +78,28 @@ class TimerService(
         return TimerSessionResponse.from(session, now)
     }
 
-    /** 타이머 종료 (완료 또는 취소) */
+    /**
+     * 타이머 종료 (완료 또는 취소)
+     * 완료(COMPLETED) 시 ActivityLog를 자동 생성한다.
+     */
     @Transactional
     fun stop(sessionId: Long, completed: Boolean = true): TimerSessionResponse {
         val session = getSessionOrThrow(sessionId)
+        val now = LocalDateTime.now()
         val status = if (completed) TimerStatus.COMPLETED else TimerStatus.CANCELLED
-        session.stop(status)
-        return TimerSessionResponse.from(session)
+        session.stop(status, now)
+
+        // 완료 시 ActivityLog 자동 생성
+        if (completed) {
+            activityLogService.createFromTimer(
+                task = session.task,
+                startedAt = session.startedAt,
+                endedAt = now,
+                durationSeconds = session.elapsed
+            )
+        }
+
+        return TimerSessionResponse.from(session, now)
     }
 
     private fun getSessionOrThrow(id: Long): TimerSession =

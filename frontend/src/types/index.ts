@@ -1,9 +1,25 @@
+// ── 사용자 프로필 ──
+
+export interface UserProfile {
+  id: number;
+  nickname: string;
+  dateCreated: string;
+  dateUpdated: string;
+}
+
+export interface UserProfileRequest {
+  nickname: string;
+}
+
+// ── 태스크 ──
+
 export interface Task {
   id: number;
   name: string;
   description: string | null;
-  category: string | null;
+  colorCode: string | null;
   isActive: boolean;
+  isFavorite: boolean;
   dateCreated: string;
   dateUpdated: string;
 }
@@ -11,15 +27,18 @@ export interface Task {
 export interface TaskCreateRequest {
   name: string;
   description?: string;
-  category?: string;
+  colorCode?: string;
 }
 
 export interface TaskUpdateRequest {
   name?: string;
   description?: string;
-  category?: string;
+  colorCode?: string;
   isActive?: boolean;
+  isFavorite?: boolean;
 }
+
+// ── 타이머 ──
 
 export type TimerStatus = 'RUNNING' | 'PAUSED' | 'COMPLETED' | 'CANCELLED';
 
@@ -60,13 +79,99 @@ export interface TimerWorkerMessage {
   taskName: string;
 }
 
+// ── 활동 기록 ──
+
+export type ActivitySource = 'TIMER' | 'MANUAL';
+
+export interface ActivityLog {
+  id: number;
+  taskId: number;
+  taskName: string;
+  colorCode: string | null;
+  startedAt: string;
+  endedAt: string;
+  durationSeconds: number;
+  source: ActivitySource;
+  memo: string | null;
+  warning: string | null;
+  dateCreated: string;
+  dateUpdated: string;
+}
+
+export interface ActivityLogCreateRequest {
+  taskId: number;
+  startedAt: string;
+  endedAt: string;
+  memo?: string;
+}
+
+export interface ActivityLogUpdateRequest {
+  taskId?: number;
+  startedAt?: string;
+  endedAt?: string;
+  memo?: string;
+}
+
+// ── 타임 트리 ──
+
+export interface TimeTreeBlock {
+  activityLogId: number;
+  taskId: number;
+  taskName: string;
+  colorCode: string | null;
+  startedAt: string;
+  endedAt: string;
+  durationSeconds: number;
+  source: ActivitySource;
+  memo: string | null;
+}
+
+export interface DailySummary {
+  totalSeconds: number;
+}
+
+export interface DailyTimeTreeResponse {
+  date: string;
+  blocks: TimeTreeBlock[];
+  summary: DailySummary;
+}
+
+export interface WeeklyDayEntry {
+  date: string;
+  blocks: TimeTreeBlock[];
+  totalSeconds: number;
+}
+
+export interface WeeklyTimeTreeResponse {
+  weekStart: string;
+  weekEnd: string;
+  days: WeeklyDayEntry[];
+}
+
+export interface MonthlyTaskBreakdown {
+  taskId: number;
+  taskName: string;
+  colorCode: string | null;
+  totalSeconds: number;
+}
+
+export interface MonthlyDayEntry {
+  date: string;
+  totalSeconds: number;
+  taskBreakdown: MonthlyTaskBreakdown[];
+}
+
+export interface MonthlyTimeTreeResponse {
+  month: string;
+  days: MonthlyDayEntry[];
+}
+
 // ── 통계 ──
 
 /** 항목별 통계 */
 export interface TaskStatsItem {
   taskId: number;
   taskName: string;
-  category: string | null;
   totalSeconds: number;
   sessionCount: number;
   percentage: number;
@@ -91,3 +196,22 @@ export interface StatsResponse {
 
 /** 통계 기간 타입 */
 export type StatsPeriod = 'daily' | 'weekly' | 'monthly' | 'custom';
+
+/** 출처별 통계 항목 */
+export interface SourceStatsItem {
+  source: string;
+  totalSeconds: number;
+  logCount: number;
+  percentage: number;
+}
+
+/** 출처별 통계 응답 */
+export interface SourceStatsResponse {
+  from: string;
+  to: string;
+  totalSeconds: number;
+  sources: SourceStatsItem[];
+}
+
+/** 통계 화면 탭 */
+export type StatsTab = 'chart' | 'timetree' | 'detail';

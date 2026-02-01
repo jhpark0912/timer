@@ -73,10 +73,11 @@ export default function TaskList({ tasks, onDelete, onStartTimer, activeTaskId }
                 {task.description && (
                   <p className="text-sm text-slate-500 mt-0.5">{task.description}</p>
                 )}
-                {task.category && (
-                  <span className="inline-block mt-1 text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                    {task.category}
-                  </span>
+                {task.colorCode && (
+                  <span
+                    className="inline-block mt-1 w-3 h-3 rounded-full"
+                    style={{ backgroundColor: task.colorCode }}
+                  />
                 )}
               </div>
               <button

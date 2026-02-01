@@ -19,12 +19,17 @@ class Task(
     @Column(columnDefinition = "TEXT")
     var description: String? = null,
 
-    /** 카테고리 또는 태그 (선택, 통계 그룹핑 용도) */
-    var category: String? = null,
+    /** 색상 코드 (예: #FF5733) */
+    @Column(name = "color_code", length = 7)
+    var colorCode: String? = null,
 
     /** 활성/비활성 상태 */
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true,
+
+    /** 즐겨찾기 여부 */
+    @Column(name = "is_favorite", nullable = false)
+    var isFavorite: Boolean = false,
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
