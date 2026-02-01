@@ -1,0 +1,29 @@
+# Dependencies
+frontend/node_modules/
+
+# Build outputs
+frontend/dist/
+backend/build/
+backend/bin/
+
+# Gradle
+backend/.gradle/
+backend/gradlew
+backend/gradlew.bat
+backend/gradle/
+
+# IDE
+.idea/
+backend/.idea/
+.vscode/
+*.iml
+
+# Lock files
+frontend/package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
