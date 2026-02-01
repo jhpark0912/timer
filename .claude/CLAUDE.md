@@ -88,3 +88,6 @@ npm test                      # 테스트
 - `frontend`: Nginx (포트 80, `/api` 경로를 backend로 리버스 프록시)
 - `backend`: Spring Boot (포트 8080)
 - `database`: PostgreSQL (포트 5432, Docker Volume으로 데이터 영속)
+
+## DB 백업
+docker-compose exec database pg_dump -U alert -d alert > backup_$(date +%Y%m%d).sql
